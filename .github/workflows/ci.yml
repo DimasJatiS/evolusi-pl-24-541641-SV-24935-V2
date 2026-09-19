@@ -1,38 +1,73 @@
-name: Laravel CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "feature/**" ]
   pull_request:
-    branches: [ "main", "dev" ]
 
 jobs:
-  code-quality:
-    name: Code Quality Check
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
-      - name: Check PHP syntax
-        run: php -l artisan
+          php-version: '8.2' # Sesuaikan menjadi 8.3/8.4 jika proyek Anda memerlukannya
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+      - name: Upload vendor
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendor-folder
+          path: vendor/
 
-  run-tests:
-    name: Run Unit Tests
+  test:
+    name: Test
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
-      - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+          php-version: '8.2'
+      - name: Download vendor
+        uses: actions/download-artifact@v4
+        with:
+          name: vendor-folder
+          path: vendor/
       - name: Copy .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
       - name: Generate key
         run: php artisan key:generate
       - name: Execute tests
         run: php artisan test
+
+  staging:
+    name: Staging
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deploy ke staging server berhasil disimulasikan."
+
+  production:
+    name: Production
+    needs: staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Eksekusi Langkah Deploy
+        run: |
+          echo "1. Mematikan aplikasi (php artisan down)"
+          echo "2. Menarik kode terbaru dari repository (git pull origin main)"
+          echo "3. Memperbarui dependensi (composer install --no-dev --optimize-autoloader)"
+          echo "4. Menjalankan migrasi database (php artisan migrate --force)"
+          echo "5. Membersihkan dan membuat cache (php artisan optimize:clear && php artisan optimize)"
+          echo "6. Membangun aset frontend (npm run build)"
+          echo "7. Menyalakan aplikasi (php artisan up)"
