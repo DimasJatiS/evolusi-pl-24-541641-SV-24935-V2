@@ -15,6 +15,6 @@ class HomepageTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(500); // Sengaja Testing gagal
+        $response->assertStatus(200); 
     }
 }
