@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PostController;
 use Illuminate\Support\Facades\Route;
 
 // initial route for the welcome page
@@ -11,3 +12,5 @@ Route::get('/', function () {
 Route::get('/about', function () {
     return view('about');
 });
+
+Route::resource('posts', PostController::class);
