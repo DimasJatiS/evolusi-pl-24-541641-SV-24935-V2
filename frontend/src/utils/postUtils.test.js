@@ -16,7 +16,7 @@ describe('postUtils Unit Tests', () => {
   describe('filterPosts', () => {
     it('mengembalikan semua post jika query kosong', () => {
       const result = filterPosts(samplePosts, '')
-      expect(result).toHaveLength(3)
+      expect(result).toHaveLength(999) //disengajakan
     })
 
     it('memfilter post berdasarkan judul (case-insensitive)', () => {
