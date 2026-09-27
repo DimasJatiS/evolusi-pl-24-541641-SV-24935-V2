@@ -48,4 +48,14 @@ AGENTS.md
 # Abaikan seluruh folder editor (baik di root maupun di subfolder)
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
+# Docker build logs & runtime artefacts
+build1.log
+build2.log
+build3.log
+database/database.sqlite

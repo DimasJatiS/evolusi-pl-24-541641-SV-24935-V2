@@ -1,16 +1,13 @@
+// routes/web.php
 <?php
 
-use App\Http\Controllers\PostController;
 use Illuminate\Support\Facades\Route;
 
-// initial route for the welcome page
+// Simple health-check — berguna untuk Docker health monitoring
 Route::get('/', function () {
-    return view('welcome');
+    return response()->json([
+        'status' => 'ok',
+        'app'    => config('app.name'),
+        'env'    => config('app.env'),
+    ]);
 });
-
-// route for the about page
-Route::get('/about', function () {
-    return view('about');
-});
-
-Route::resource('posts', PostController::class);
