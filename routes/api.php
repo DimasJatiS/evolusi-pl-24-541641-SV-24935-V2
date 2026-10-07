@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CommentController;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -36,3 +37,9 @@ Route::delete('/posts/{post}', function (Post $post) {
     $post->delete();
     return response()->json(['message' => 'Post berhasil dihapus']);
 });
+
+// --- API COMMENT ENDPOINTS ---
+Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
+Route::post('/posts/{post}/comments', [CommentController::class, 'apiStore']);
+Route::put('/comments/{comment}', [CommentController::class, 'apiUpdate']);
+Route::delete('/comments/{comment}', [CommentController::class, 'apiDestroy']);
