@@ -1,11 +1,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import CommentSection from '../components/CommentSection.vue'
 import {
   filterPosts,
   formatPostDate,
   truncateContent,
   getPostStats,
 } from '../utils/postUtils.js'
+
+const activeCommentPostId = ref(null)
+const toggleComments = (id) => {
+  activeCommentPostId.value = activeCommentPostId.value === id ? null : id
+}
+
 
 const posts = ref([])
 const loading = ref(true)
@@ -259,6 +266,9 @@ const stats = computed(() => {
         <p class="post-body">{{ truncateContent(post.content, 140) }}</p>
                 <!-- Tombol Aksi CRUD -->
         <div class="post-actions">
+          <button @click="toggleComments(post.id)" class="action-btn btn-comments" title="Lihat/Tulis Komentar">
+            💬 {{ activeCommentPostId === post.id ? 'Tutup Komentar' : 'Komentar' }}
+          </button>
           <button @click="startEdit(post)" class="action-btn btn-edit" title="Edit Post">
             ✏️ Edit
           </button>
@@ -266,6 +276,8 @@ const stats = computed(() => {
             🗑️ Hapus
           </button>
         </div>
+
+        <CommentSection v-if="activeCommentPostId === post.id" :post-id="post.id" />
       </article>
     </div>
   </div>
@@ -411,6 +423,12 @@ const stats = computed(() => {
   align-items: center;
   gap: 0.35rem;
   transition: all 0.2s;
+}
+
+.btn-comments:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #6ee7b7;
 }
 
 .btn-edit:hover {
