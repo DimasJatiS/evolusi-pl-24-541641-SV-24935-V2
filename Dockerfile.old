@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────────────
+# Dockerfile Tugas 4 (Single-Stage / Debian Base - Sebelum Perubahan)
+# ─────────────────────────────────────────────────────────────────
+FROM php:8.4-apache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libsqlite3-dev \
+        libzip-dev \
+        unzip \
+        curl \
+    && docker-php-ext-install pdo pdo_sqlite zip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri \
+        -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+        /etc/apache2/sites-available/000-default.conf \
+        /etc/apache2/apache2.conf \
+    && a2enmod rewrite
+
+WORKDIR /var/www/html
+COPY . .
+COPY .env.example .env
+
+RUN composer install --no-interaction --prefer-dist \
+    && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache database \
+    && touch database/database.sqlite \
+    && chown -R www-data:www-data storage bootstrap/cache database \
+    && chmod -R 775 storage bootstrap/cache \
+    && php artisan key:generate --force \
+    && php artisan migrate --force
+
+EXPOSE 80

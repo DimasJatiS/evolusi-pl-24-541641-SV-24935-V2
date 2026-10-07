@@ -3,6 +3,9 @@
 .env
 .env.backup
 .env.production
+.env.local
+.env.*.local
+.env.testing
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -12,6 +15,8 @@
 /.phpunit.cache
 /.vscode
 /.zed
+/.fleet
+/coverage/
 /auth.json
 /node_modules
 /public/build
@@ -25,3 +30,33 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+CLAUDE.md
+AGENTS.md
+BUKTI.md
+# Frontend Vue SPA
+/frontend/dist
+/frontend/dist-ssr
+/frontend/node_modules
+/frontend/.env.local
+/frontend/.env.*.local
+
+# Abaikan seluruh folder editor (baik di root maupun di subfolder)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Docker build logs & runtime artefacts
+build1.log
+build2.log
+build3.log
+database/database.sqlite

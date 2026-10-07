@@ -1,0 +1,47 @@
+# Dependencies (never ship these — installed inside the image)
+node_modules
+vendor
+
+# Version control
+.git
+.gitattributes
+.gitignore
+.github
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# IDE / editor artefacts
+.editorconfig
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build output & cache
+.phpunit.result.cache
+/public/hot
+# /public/build
+
+# Logs & runtime storage
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Docker files (no need to copy into the image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# OS rubbish
+.DS_Store
+Thumbs.db
+
+# Frontend
+resources/views
+resources/js
+resources/css
+
