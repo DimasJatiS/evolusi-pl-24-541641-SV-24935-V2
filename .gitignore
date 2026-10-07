@@ -38,6 +38,7 @@ yarn-error.log*
 *.sqlite-wal
 CLAUDE.md
 AGENTS.md
+BUKTI.md
 # Frontend Vue SPA
 /frontend/dist
 /frontend/dist-ssr
