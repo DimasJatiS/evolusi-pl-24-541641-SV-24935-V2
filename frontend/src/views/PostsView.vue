@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import CommentSection from '../components/CommentSection.vue'
+import apiClient from '../api/axios'
 import {
   filterPosts,
   formatPostDate,
@@ -13,14 +14,10 @@ const toggleComments = (id) => {
   activeCommentPostId.value = activeCommentPostId.value === id ? null : id
 }
 
-
 const posts = ref([])
 const loading = ref(true)
 const error = ref(null)
 const searchQuery = ref('')
-
-// Mengambil URL API dari environment variable VITE_API_URL
-const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 
 // --- State Form CRUD ---
 const form = ref({
@@ -52,6 +49,7 @@ const startEdit = (post) => {
   // Scroll halus ke posisi form
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+
 // Submit Form (Menangani Create sekaligus Update)
 const handleSubmit = async () => {
   formError.value = null
@@ -62,44 +60,37 @@ const handleSubmit = async () => {
   isSubmitting.value = true
   try {
     const isEdit = isEditing.value
-    const url = isEdit ? `${apiUrl}/posts/${editingId.value}` : `${apiUrl}/posts`
-    const method = isEdit ? 'PUT' : 'POST'
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(form.value),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      throw new Error(data.message || 'Gagal menyimpan postingan.')
+    if (isEdit) {
+      await apiClient.put(`/posts/${editingId.value}`, form.value)
+    } else {
+      await apiClient.post('/posts', form.value)
     }
     resetForm()
     await fetchPosts() // Refresh list otomatis
   } catch (err) {
-    formError.value = err.message
+    if (err.response?.status === 401) {
+      formError.value = 'Sesi habis atau Anda belum login (401 Unauthorized). Silakan login terlebih dahulu.'
+    } else {
+      formError.value = err.response?.data?.message || err.message || 'Gagal menyimpan postingan.'
+    }
   } finally {
     isSubmitting.value = false
   }
 }
+
 // Handler Hapus Postingan
 const deletePost = async (id) => {
   if (!confirm('Apakah kamu yakin ingin menghapus postingan ini?')) return
   try {
-    const res = await fetch(`${apiUrl}/posts/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-    if (!res.ok) throw new Error('Gagal menghapus postingan.')
-    // Jika sedang mengedit post yang dihapus, batalkan edit
+    await apiClient.delete(`/posts/${id}`)
     if (editingId.value === id) resetForm()
     await fetchPosts()
   } catch (err) {
-    alert(err.message)
+    if (err.response?.status === 401) {
+      alert('Sesi habis atau Anda belum login (401 Unauthorized). Silakan login terlebih dahulu.')
+    } else {
+      alert(err.response?.data?.message || err.message || 'Gagal menghapus postingan.')
+    }
   }
 }
 
@@ -108,20 +99,10 @@ const fetchPosts = async () => {
   error.value = null
 
   try {
-    const res = await fetch(`${apiUrl}/posts`, {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-
-    if (!res.ok) {
-      throw new Error(`Gagal memuat data dari server (HTTP ${res.status})`)
-    }
-
-    const data = await res.json()
-    posts.value = Array.isArray(data) ? data : []
+    const res = await apiClient.get('/posts')
+    posts.value = Array.isArray(res.data) ? res.data : []
   } catch (err) {
-    error.value = err.message || 'Terjadi kesalahan saat memanggil API.'
+    error.value = err.response?.data?.message || err.message || 'Terjadi kesalahan saat memanggil API.'
   } finally {
     loading.value = false
   }

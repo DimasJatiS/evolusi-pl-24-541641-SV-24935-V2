@@ -33,26 +33,21 @@ RUN apk add --no-cache \
         libzip-dev \
         curl \
         icu-dev \
-    && docker-php-ext-install pdo pdo_sqlite zip
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite zip
 
 WORKDIR /var/www/html
 
 # Copy app files and optimized vendor from builder stage
 COPY --from=builder /app /var/www/html
 
-# Setup env, permissions, and database initialization
-RUN if [ ! -f .env ]; then cp .env.example .env; fi \
-    && mkdir -p storage/framework/sessions \
+# Setup directory structure and permissions
+RUN mkdir -p storage/framework/sessions \
                 storage/framework/views \
                 storage/framework/cache \
                 storage/logs \
                 bootstrap/cache \
-                database \
-    && touch database/database.sqlite \
-    && php artisan key:generate --force \
-    && php artisan migrate --force \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache database
+    && chmod -R 775 storage bootstrap/cache
 
 # Ensure container runs as non-root user (Requirement 4)
 USER www-data

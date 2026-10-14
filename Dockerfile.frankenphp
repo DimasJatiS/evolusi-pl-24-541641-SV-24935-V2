@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────
+# Stage 1: Build & Vendor Dependencies (Version Pinned)
+# ─────────────────────────────────────────────────────────────────
+FROM composer:2.8.5 AS vendor
+
+WORKDIR /app
+
+# Copy definisi composer terlebih dahulu untuk memanfaatkan cache layer Docker
+COPY composer.json composer.lock ./
+
+# Install dependensi produksi saja
+RUN composer install \
+    --no-interaction \
+    --no-dev \
+    --prefer-dist \
+    --no-scripts \
+    --no-autoloader
+
+# Copy seluruh source code aplikasi
+COPY . .
+
+# Generate autoloader produksi yang teroptimasi
+RUN composer dump-autoload --optimize --no-dev
+
+# ─────────────────────────────────────────────────────────────────
+# Stage 2: FrankenPHP Runtime Image (PHP 8.4 Alpine Pinned)
+# ─────────────────────────────────────────────────────────────────
+FROM dunglas/frankenphp:1-php8.4-alpine AS runner
+
+# Install ekstensi PHP esensial untuk Laravel menggunakan helper bawaan FrankenPHP
+RUN install-php-extensions \
+    pdo_mysql \
+    pdo_sqlite \
+    zip \
+    intl \
+    opcache \
+    bcmath
+
+WORKDIR /app
+
+# Salin aplikasi lengkap beserta vendor teroptimasi dari stage vendor
+COPY --from=vendor /app /app
+
+# Salin konfigurasi Caddyfile untuk routing Laravel
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Siapkan direktori storage & permissions untuk user www-data
+RUN mkdir -p storage/framework/sessions \
+                storage/framework/views \
+                storage/framework/cache \
+                storage/logs \
+                bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Port yang dibuka oleh Caddy FrankenPHP
+EXPOSE 8000
+
+# Healthcheck otomatis
+HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
+
+# Jalankan FrankenPHP dengan Caddyfile
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
