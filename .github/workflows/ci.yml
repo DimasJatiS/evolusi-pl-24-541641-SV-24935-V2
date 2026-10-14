@@ -1,73 +1,53 @@
-name: CI/CD Pipeline
+name: Continuous Integration
 
 on:
   push:
     branches: [ "main", "dev", "feature/**" ]
   pull_request:
+    branches: [ "main", "dev" ]
 
 jobs:
-  build:
-    name: Build
+  backend-test:
+    name: Backend Test (PHP & Laravel)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-      - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-      - name: Upload vendor
-        uses: actions/upload-artifact@v4
-        with:
-          name: vendor-folder
-          path: vendor/
 
-  test:
-    name: Test
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-      - name: Download vendor
-        uses: actions/download-artifact@v4
-        with:
-          name: vendor-folder
-          path: vendor/
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-      - name: Generate key
-        run: php artisan key:generate
-      - name: Execute tests
+          extensions: pdo, sqlite, pdo_sqlite, zip
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+
+      - name: Run Feature Tests
         run: php artisan test
 
-  staging:
-    name: Staging
-    needs: test
+  frontend-build:
+    name: Frontend Lint & Build (Vue.js)
     runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to Staging
-        run: echo "Deploy ke staging server berhasil disimulasikan."
-
-  production:
-    name: Production
-    needs: staging
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: production
     steps:
       - uses: actions/checkout@v4
-      - name: Eksekusi Langkah Deploy
-        run: |
-          echo "1. Mematikan aplikasi (php artisan down)"
-          echo "2. Menarik kode terbaru dari repository (git pull origin main)"
-          echo "3. Memperbarui dependensi (composer install --no-dev --optimize-autoloader)"
-          echo "4. Menjalankan migrasi database (php artisan migrate --force)"
-          echo "5. Membersihkan dan membuat cache (php artisan optimize:clear && php artisan optimize)"
-          echo "6. Membangun aset frontend (npm run build)"
-          echo "7. Menyalakan aplikasi (php artisan up)"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Build
+        working-directory: frontend
+        run: npm run build

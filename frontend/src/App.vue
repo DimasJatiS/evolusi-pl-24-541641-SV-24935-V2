@@ -1,4 +1,29 @@
 <script setup>
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
+const isAuthenticated = ref(false)
+
+const checkAuth = () => {
+  isAuthenticated.value = !!localStorage.getItem('auth_token')
+}
+
+onMounted(() => {
+  checkAuth()
+})
+
+watch(() => route.path, () => {
+  checkAuth()
+})
+
+const handleLogout = () => {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('user')
+  isAuthenticated.value = false
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -16,6 +41,12 @@
           </router-link>
           <router-link to="/posts" class="nav-link" active-class="active">
             Daftar Post
+          </router-link>
+          <button v-if="isAuthenticated" @click="handleLogout" class="nav-btn-logout">
+            Keluar
+          </button>
+          <router-link v-else to="/login" class="nav-link nav-link-login" active-class="active">
+            Masuk
           </router-link>
         </nav>
       </div>
@@ -117,6 +148,33 @@ body {
 .nav-link.active {
   color: #818cf8;
   background: rgba(99, 102, 241, 0.12);
+}
+
+.nav-link-login {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+}
+
+.nav-link-login:hover {
+  background: rgba(99, 102, 241, 0.25);
+  color: #ffffff;
+}
+
+.nav-btn-logout {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn-logout:hover {
+  background: rgba(239, 68, 68, 0.22);
+  color: #ffffff;
 }
 
 .main-content {

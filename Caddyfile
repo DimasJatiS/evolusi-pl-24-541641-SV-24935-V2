@@ -1,0 +1,23 @@
+{
+    # Matikan otomatis HTTPS untuk container development/internal
+    auto_https off
+    # Aktifkan modul server FrankenPHP
+    frankenphp
+}
+
+:8000 {
+    # Set webroot ke direktori public/ Laravel
+    root * /app/public
+
+    # Aktifkan kompresi modern
+    encode zstd gzip
+
+    # Eksekusi PHP in-memory via FrankenPHP
+    php_server
+
+    # Output log ke stdout agar terbaca oleh docker compose logs
+    log {
+        output stdout
+        format console
+    }
+}
